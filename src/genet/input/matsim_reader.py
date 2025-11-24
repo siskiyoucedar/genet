@@ -553,6 +553,8 @@ def read_vehicles(vehicles_path):
     vehicles = {}
     vehicle_types = {}
     v = {"capacity": {}}
+    # Matsim v2.0 supports multiple ways of defining capacity
+    # We now check what the dtd is, and handle capacity accordingly
     read_capacity = False
     for event, elem in ET.iterparse(vehicles_path):
         tag = re.sub(r"{http://www\.matsim\.org/files/dtd}", "", elem.tag)
@@ -564,10 +566,30 @@ def read_vehicles(vehicles_path):
             vehicle_types[elem.attrib["id"]] = v
             v = {"capacity": {}}
             read_capacity = False
+
         elif tag == "capacity":
+            # MATSim v2.0 - more ways of defining capacity
+            cap = v.get("capacity", {})
+
+            # Seats (MATSim v2.0 / v1.x)
+            if "seats" in elem.attrib:
+                cap["seats"] = elem.attrib["seats"]
+
+            # Standing room (MATSim v2.0 uses standingRoomInPersons)
+            if "standingRoomInPersons" in elem.attrib:
+                cap["standingRoom"] = elem.attrib["standingRoomInPersons"]
+            elif "standingRoom" in elem.attrib:
+                cap["standingRoom"] = elem.attrib["standingRoom"]
+
+            v["capacity"] = cap
+
             read_capacity = True
+
         elif read_capacity:
-            v[tag] = elem.attrib
-        else:
+            # v1.0 Matsim dtd, behaviour: supports <seats persons="21"/>
             v["capacity"][tag] = elem.attrib
+
+        else:
+            v[tag] = elem.attrib
+
     return vehicles, vehicle_types
