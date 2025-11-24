@@ -326,13 +326,19 @@ def write_vehicles(output_dir, vehicles, vehicle_types, file_name="vehicles.xml"
                     vehicle_type_attribs = {"id": vehicle_type}
                     veh_type_vals = vehicle_types[vehicle_type]
                     with xf.element("vehicleType", vehicle_type_attribs):
-                        with xf.element("capacity"):
-                            xf.write(etree.Element("seats", veh_type_vals["capacity"]["seats"]))
-                            xf.write(
-                                etree.Element(
-                                    "standingRoom", veh_type_vals["capacity"]["standingRoom"]
-                                )
-                            )
+                        # Matsim v2.0 adds more complex capacity definitions
+                        cap = veh_type_vals.get("capacity", {})
+                        # create capacity element with attributes
+                        capacity_el = etree.Element("capacity")
+                        # Seats
+                        seats = cap.get("seats")
+                        if seats is not None:
+                            capacity_el.set("seats", str(seats))
+                        # Standing (MATSim v2.0 uses standingRoomInPersons)
+                        standing = cap.get("standingRoom")
+                        if standing is not None:
+                            capacity_el.set("standingRoomInPersons", str(standing))
+                        xf.write(capacity_el)
                         xf.write(etree.Element("length", veh_type_vals["length"]))
                         xf.write(etree.Element("width", veh_type_vals["width"]))
                         xf.write(etree.Element("accessTime", veh_type_vals["accessTime"]))
