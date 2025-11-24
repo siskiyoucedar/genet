@@ -326,6 +326,7 @@ def write_vehicles(output_dir, vehicles, vehicle_types, file_name="vehicles.xml"
                     vehicle_type_attribs = {"id": vehicle_type}
                     veh_type_vals = vehicle_types[vehicle_type]
                     with xf.element("vehicleType", vehicle_type_attribs):
+                        cap = veh_type_vals.get("capacity", {}) or {}
                         # Decide if this looks like "v1 style" (nested elements) or "v2 style" (scalar attrs)
                         # v1 style: {'seats': {'persons': '21'}, 'standingRoom': {'persons': '0'}}
                         # v2 style: {'seats': '21', 'standingRoom': '0'}
