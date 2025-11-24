@@ -326,19 +326,36 @@ def write_vehicles(output_dir, vehicles, vehicle_types, file_name="vehicles.xml"
                     vehicle_type_attribs = {"id": vehicle_type}
                     veh_type_vals = vehicle_types[vehicle_type]
                     with xf.element("vehicleType", vehicle_type_attribs):
-                        # Matsim v2.0 adds more complex capacity definitions
-                        cap = veh_type_vals.get("capacity", {})
-                        # create capacity element with attributes
-                        capacity_el = etree.Element("capacity")
-                        # Seats
-                        seats = cap.get("seats")
-                        if seats is not None:
-                            capacity_el.set("seats", str(seats))
-                        # Standing (MATSim v2.0 uses standingRoomInPersons)
-                        standing = cap.get("standingRoom")
-                        if standing is not None:
-                            capacity_el.set("standingRoomInPersons", str(standing))
-                        xf.write(capacity_el)
+                        # Decide if this looks like "v1 style" (nested elements) or "v2 style" (scalar attrs)
+                        # v1 style: {'seats': {'persons': '21'}, 'standingRoom': {'persons': '0'}}
+                        # v2 style: {'seats': '21', 'standingRoom': '0'}
+                        is_v1_style = any(isinstance(v, dict) for v in cap.values())
+
+                        if is_v1_style:
+                            # ----- MATSim v1.x style: elements under <capacity> -----
+                            with xf.element("capacity"):
+                                seats_dict = cap.get("seats")
+                                if isinstance(seats_dict, dict):
+                                    xf.write(etree.Element("seats", seats_dict))
+
+                                standing_dict = cap.get("standingRoom")
+                                if isinstance(standing_dict, dict):
+                                    xf.write(etree.Element("standingRoom", standing_dict))
+                        else:
+                            # ----- MATSim v2.0 style: attributes on <capacity> -----
+                            capacity_el = etree.Element("capacity")
+
+                            seats = cap.get("seats")
+                            if seats is not None:
+                                capacity_el.set("seats", str(seats))
+
+                            # MATSim v2.0 uses 'standingRoomInPersons'
+                            standing = cap.get("standingRoom")
+                            if standing is not None:
+                                capacity_el.set("standingRoomInPersons", str(standing))
+
+                            xf.write(capacity_el)
+
                         xf.write(etree.Element("length", veh_type_vals["length"]))
                         xf.write(etree.Element("width", veh_type_vals["width"]))
                         xf.write(etree.Element("accessTime", veh_type_vals["accessTime"]))
