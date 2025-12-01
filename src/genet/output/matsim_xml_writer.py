@@ -356,17 +356,12 @@ def write_vehicles(output_dir, vehicles, vehicle_types, file_name="vehicles.xml"
                                 capacity_el.set("standingRoomInPersons", str(standing))
 
                             xf.write(capacity_el)
-
-                        xf.write(etree.Element("length", veh_type_vals["length"]))
-                        xf.write(etree.Element("width", veh_type_vals["width"]))
-                        xf.write(etree.Element("accessTime", veh_type_vals["accessTime"]))
-                        xf.write(etree.Element("egressTime", veh_type_vals["egressTime"]))
-                        xf.write(etree.Element("doorOperation", veh_type_vals["doorOperation"]))
-                        xf.write(
-                            etree.Element(
-                                "passengerCarEquivalents", veh_type_vals["passengerCarEquivalents"]
-                            )
-                        )
+                        
+                        # Optional fields — write only if present
+                        for field in ["length", "width", "accessTime", "egressTime", "doorOperation", "passengerCarEquivalents"]:
+                            if field in veh_type_vals:
+                                xf.write(etree.Element(field, str(veh_type_vals[field])))
+    
                 else:
                     raise NotImplementedError(
                         f"No Vehicle Type info available for mode {vehicle_type}, "
